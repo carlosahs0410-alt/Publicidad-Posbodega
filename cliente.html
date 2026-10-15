@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor Cliente · POS Bodega</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ============================================================
+   RESET & VARIABLES
+   ============================================================ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --ink:        #0f172a;
+    --ink-soft:   #334155;
+    --muted:      #64748b;
+    --line:       #e2e8f0;
+    --line-soft:  #f1f5f9;
+    --brand:      #2563eb;
+    --brand-dark: #1e40af;
+    --brand-soft: #eff6ff;
+    --success:    #10b981;
+    --success-dk: #059669;
+    --warn:       #f59e0b;
+    --bg-app:     #0b1220;
+    --radius-lg:  26px;
+    --radius-md:  16px;
+    --radius-sm:  12px;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(circle at 18% 0%, #1e293b 0%, #0b1220 52%, #05080f 100%);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 22px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+}
+
+/* ============================================================
+   CONTENEDOR PRINCIPAL
+   ============================================================ */
+.visor {
+    width: 100%;
+    max-width: 1180px;
+    height: min(90vh, 880px);
+    min-height: 520px;
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow:
+        0 40px 90px -20px rgba(0, 0, 0, 0.75),
+        0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* ============================================================
+   CABECERA
+   ============================================================ */
+.visor-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 26px;
+    background: linear-gradient(120deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    color: #ffffff;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.brand-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    display: grid;
+    place-items: center;
+    font-size: 1.25rem;
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.brand-text h1 {
+    font-size: 1.12rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.brand-text span {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.clock {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+.status-badge i {
+    font-size: 0.85rem;
+}
+
+.status-badge.waiting {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: rgba(245, 158, 11, 0.55);
+    color: #fde68a;
+}
+
+.status-badge.buying {
+    background: rgba(59, 130, 246, 0.26);
+    border-color: rgba(96, 165, 250, 0.60);
+    color: #bfdbfe;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.26);
+    border-color: rgba(52, 211, 153, 0.60);
+    color: #a7f3d0;
+}
+
+/* ============================================================
+   ÁREA PRINCIPAL / VISTAS
+   ============================================================ */
+.visor-main {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: #f1f5f9;
+}
+
+.view {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.view.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================================
+   VISTA INACTIVA · CARRUSEL PUBLICITARIO
+   ============================================================ */
+.view-idle {
+    background: var(--bg-app);
+}
+
+.carousel {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--bg-app);
+}
+
+.slides {
+    position: absolute;
+    inset: 0;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1s ease;
+    will-change: opacity;
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform-origin: center;
+}
+
+.slide.active img {
+    animation: kenburns 9s ease-out forwards;
+}
+
+@keyframes kenburns {
+    from { transform: scale(1.09); }
+    to   { transform: scale(1.00); }
+}
+
+.slide.fallback {
+    background:
+        radial-gradient(circle at 78% 18%, rgba(56, 189, 248, 0.28), transparent 55%),
+        linear-gradient(135deg, #1e3a8a 0%, #0f172a 58%, #312e81 100%);
+}
+
+/* Capa oscura degradada para legibilidad del texto */
+.slide-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            to top,
+            rgba(3, 7, 18, 0.95) 0%,
+            rgba(3, 7, 18, 0.78) 26%,
+            rgba(3, 7, 18, 0.28) 58%,
+            rgba(3, 7, 18, 0.05) 100%
+        ),
+        linear-gradient(
+            to right,
+            rgba(3, 7, 18, 0.78) 0%,
+            rgba(3, 7, 18, 0.10) 62%,
+            rgba(3, 7, 18, 0.00) 100%
+        );
+    pointer-events: none;
+}
+
+.slide-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    max-width: 820px;
+    padding: 0 56px 54px;
+    color: #ffffff;
+}
+
+.slide-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #2563eb, #38bdf8);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ffffff;
+    box-shadow: 0 10px 26px rgba(37, 99, 235, 0.48);
+}
+
+.slide-tag i {
+    font-size: 0.72rem;
+}
+
+.slide-content h2 {
+    font-size: 2.4rem;
+    line-height: 1.12;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    text-shadow: 0 4px 28px rgba(0, 0, 0, 0.65);
+}
+
+.slide-content p {
+    font-size: 1.02rem;
+    line-height: 1.55;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.84);
+    max-width: 620px;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+/* Chip de bienvenida sobre el carrusel */
+.carousel-brand {
+    position: absolute;
+    top: 28px;
+    left: 40px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+}
+
+.carousel-brand i {
+    color: #38bdf8;
+    font-size: 1.05rem;
+}
+
+.carousel-brand p {
+    font-size: 0.84rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Indicadores */
+.carousel-dots {
+    position: absolute;
+    right: 42px;
+    bottom: 46px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.36);
+    cursor: pointer;
+    transition: width 0.35s ease, background 0.35s ease;
+}
+
+.dot:hover {
+    background: rgba(255, 255, 255, 0.65);
+}
+
+.dot.active {
+    width: 34px;
+    background: #ffffff;
+}
+
+/* ============================================================
+   VISTA CARRITO
+   ============================================================ */
+.view-cart {
+    display: flex;
+    flex-direction: column;
+    background: #f1f5f9;
+}
+
+.success-banner {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    padding: 16px 26px;
+    background: linear-gradient(120deg, #059669 0%, #10b981 55%, #34d399 100%);
+    color: #ffffff;
+}
+
+.success-banner.show {
+    display: flex;
+    animation: itemIn 0.5s ease both;
+}
+
+.success-banner .icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    display: grid;
+    place-items: center;
+    font-size: 1.45rem;
+}
+
+.success-banner h2 {
+    font-size: 1.28rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+
+.success-banner p {
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.cart-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+.cart-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: #f8fafc;
+}
+
+.cart-head {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) 130px 140px;
+    gap: 16px;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 14px 30px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.cart-head span:nth-child(3),
+.cart-head span:nth-child(4) {
+    text-align: right;
+}
+
+.cart-items {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 30px 22px;
+    scrollbar-gutter: stable;
+}
+
+.cart-item {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) 130px 140px;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    animation: itemIn 0.42s ease both;
+}
+
+.cart-item:last-child {
+    border-bottom: 0;
+}
+
+@keyframes itemIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.qty-badge {
+    width: 48px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+    background: #e0e7ff;
+    border: 1px solid #c7d2fe;
+    color: #3730a3;
+    font-size: 0.92rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.item-name {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.item-name .name {
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-name .code {
+    font-size: 0.70rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.unit {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.unit small {
+    font-size: 0.74rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.subtotal {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--brand);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.totals-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px 26px;
+    background: #ffffff;
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+}
+
+.totals-title {
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.totals-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+}
+
+.t-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.96rem;
+}
+
+.t-row > span:first-child {
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.t-row strong {
+    font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.t-row.bs strong {
+    color: #0e7490;
+}
+
+.t-row.change strong {
+    color: var(--success-dk);
+}
+
+.t-grand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(120deg, #ecfdf5, #d1fae5);
+    border: 1px solid #a7f3d0;
+}
+
+.t-grand > span:first-child {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #047857;
+}
+
+.t-grand > span:last-child {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: var(--success-dk);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.rate-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--brand-soft);
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.rate-chip i {
+    font-size: 0.85rem;
+}
+
+.cart-items::-webkit-scrollbar,
+.totals-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cart-items::-webkit-scrollbar-track,
+.totals-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cart-items::-webkit-scrollbar-thumb,
+.totals-panel::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.cart-items::-webkit-scrollbar-thumb:hover,
+.totals-panel::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.visor-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 26px;
+    background: #0f172a;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+.visor-footer .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot-live {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.65);
+    }
+    50% {
+        opacity: 0.72;
+        box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);
+    }
+}
+
+@media (max-width: 900px) {
+    body {
+        padding: 0;
+    }
+
+    .visor {
+        height: 100vh;
+        max-width: none;
+        border-radius: 0;
+    }
+
+    .cart-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    .totals-panel {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+        max-height: 48%;
+        padding: 18px 20px;
+    }
+
+    .cart-head {
+        display: none;
+    }
+
+    .cart-items {
+        padding: 6px 20px 18px;
+    }
+
+    .cart-item {
+        grid-template-columns: 56px minmax(0, 1fr) auto;
+        gap: 6px 12px;
+        padding: 12px 0;
+    }
+
+    .qty-badge {
+        grid-row: 1 / span 2;
+        width: 46px;
+        height: 36px;
+    }
+
+    .item-name {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .unit {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: left;
+        font-size: 0.82rem;
+    }
+
+    .subtotal {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        font-size: 1rem;
+    }
+
+    .slide-content {
+        padding: 0 24px 34px;
+    }
+
+    .slide-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .slide-content p {
+        font-size: 0.86rem;
+    }
+
+    .carousel-brand {
+        top: 16px;
+        left: 18px;
+        padding: 8px 14px;
+    }
+
+    .carousel-brand p {
+        font-size: 0.75rem;
+    }
+
+    .carousel-dots {
+        right: 20px;
+        bottom: 22px;
+    }
+
+    .clock {
+        display: none;
+    }
+
+    .brand-text h1 {
+        font-size: 0.95rem;
+    }
+
+    .brand-text span {
+        font-size: 0.64rem;
+    }
+
+    .status-badge {
+        padding: 7px 13px;
+        font-size: 0.68rem;
+    }
+
+    .visor-header {
+        padding: 13px 16px;
+    }
+
+    .visor-footer {
+        padding: 9px 16px;
+        font-size: 0.68rem;
+    }
+
+    .t-grand > span:last-child {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .brand-text span {
+        display: none;
+    }
+
+    .slide-content h2 {
+        font-size: 1.25rem;
+    }
+
+    .slide-content p {
+        display: none;
+    }
+
+    .visor-footer .live span:last-child {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="visor" id="visor">
+
+    <!-- ====================== CABECERA ====================== -->
+    <header class="visor-header">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <div class="brand-text">
+                <h1>POS Bodega</h1>
+                <span>Visor del Cliente</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="clock" id="clock">--:--</div>
+            <div class="status-badge waiting" id="statusBadge">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Esperando</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ====================== CONTENIDO ====================== -->
+    <main class="visor-main">
+
+        <!-- ---------- VISTA 1: PUBLICIDAD (INACTIVO) ---------- -->
+        <section class="view view-idle active" id="viewIdle">
+            <div class="carousel" id="carousel">
+                <div class="slides" id="slides"></div>
+
+                <div class="carousel-brand">
+                    <i class="fas fa-basket-shopping"></i>
+                    <p>Bienvenido · Escanee sus productos</p>
+                </div>
+
+                <div class="carousel-dots" id="carouselDots"></div>
+            </div>
+        </section>
+
+        <!-- ---------- VISTA 2: CARRITO ---------- -->
+        <section class="view view-cart" id="viewCart">
+
+            <div class="success-banner" id="successBanner">
+                <div class="icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div>
+                    <h2>¡Gracias por su compra!</h2>
+                    <p>Su pedido ha sido registrado con éxito.</p>
+                </div>
+            </div>
+
+            <div class="cart-body">
+                <div class="cart-panel">
+                    <div class="cart-head">
+                        <span>Cant.</span>
+                        <span>Producto</span>
+                        <span>P. Unitario</span>
+                        <span>Subtotal</span>
+                    </div>
+                    <div class="cart-items" id="cartItems"></div>
+                </div>
+
+                <aside class="totals-panel" id="totalsPanel"></aside>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ====================== PIE ====================== -->
+    <footer class="visor-footer">
+        <span class="live">
+            <span class="dot-live"></span>
+            <span>Sincronización en tiempo real</span>
+        </span>
+        <span id="footerRate">Tasa: 1 $ = — Bs</span>
+    </footer>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+
+/* ============================================================
+   FIREBASE
+   ============================================================ */
+const firebaseConfig = {
+    apiKey: "AIzaSyDASudwLXWE-QHDwBFhCaqsoTHG---IFjU",
+    authDomain: "pos-bodega-nube-2d862.firebaseapp.com",
+    databaseURL: "https://pos-bodega-nube-2d862-default-rtdb.firebaseio.com",
+    projectId: "pos-bodega-nube-2d862",
+    storageBucket: "pos-bodega-nube-2d862.firebasestorage.app",
+    messagingSenderId: "114620530032",
+    appId: "1:114620530032:web:71eef73efed06c68f2a3b5"
+};
+
+let db = null;
+try {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+} catch (err) {
+    console.warn('Firebase no disponible:', err);
+}
+
+/* ============================================================
+   PUBLICIDAD DINÁMICA (se llena desde Firebase)
+   ============================================================ */
+let promos = [];
+let rotationMs = 4000;
+
+/* ============================================================
+   REFERENCIAS DEL DOM
+   ============================================================ */
+const viewIdle       = document.getElementById('viewIdle');
+const viewCart       = document.getElementById('viewCart');
+const slidesEl       = document.getElementById('slides');
+const dotsEl         = document.getElementById('carouselDots');
+const cartItemsEl    = document.getElementById('cartItems');
+const totalsPanelEl  = document.getElementById('totalsPanel');
+const successBanner  = document.getElementById('successBanner');
+const statusBadge    = document.getElementById('statusBadge');
+const clockEl        = document.getElementById('clock');
+const footerRateEl   = document.getElementById('footerRate');
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+function pick() {
+    for (let i = 0; i < arguments.length; i++) {
+        const v = arguments[i];
+        if (v !== undefined && v !== null && v !== '') return v;
+    }
+    return undefined;
+}
+
+function num(value) {
+    if (typeof value === 'number') return isFinite(value) ? value : 0;
+    if (typeof value === 'string') {
+        const clean = value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+        const parsed = parseFloat(clean);
+        return isFinite(parsed) ? parsed : 0;
+    }
+    const parsed = parseFloat(value);
+    return isFinite(parsed) ? parsed : 0;
+}
+
+function escapeHtml(str) {
+    return String(str === undefined || str === null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function fmtUSD(value) {
+    return '$' + num(value).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function fmtBS(value) {
+    return 'Bs ' + num(value).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function fmtNum(value) {
+    return num(value).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function fmtQty(qty) {
+    const q = num(qty);
+    if (Number.isInteger(q)) return String(q);
+    return q.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+/* ============================================================
+   RELOJ
+   ============================================================ */
+function tickClock() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    clockEl.textContent = hh + ':' + mm;
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+/* ============================================================
+   CARRUSEL PUBLICITARIO
+   ============================================================ */
+let slideIndex  = 0;
+let rotateTimer = null;
+
+function buildCarousel() {
+    slidesEl.innerHTML = '';
+    dotsEl.innerHTML = '';
+
+    const lista = promos.length ? promos : [{
+        img: '',
+        tag: 'Bienvenido',
+        title: 'POS Bodega',
+        desc: 'Escanee sus productos. Su compra aparecerá aquí en pantalla.'
+    }];
+
+    lista.forEach(function (promo, index) {
+        const slide = document.createElement('div');
+        slide.className = 'slide' + (index === 0 ? ' active' : '');
+
+        if (promo.img) {
+            const img = document.createElement('img');
+            img.src = promo.img;
+            img.alt = promo.title || 'Publicidad';
+            img.draggable = false;
+            img.addEventListener('error', function () {
+                img.remove();
+                slide.classList.add('fallback');
+            });
+            slide.appendChild(img);
+        } else {
+            slide.classList.add('fallback');
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'slide-overlay';
+        slide.appendChild(overlay);
+
+        const content = document.createElement('div');
+        content.className = 'slide-content';
+
+        let inner = '';
+        if (promo.tag)   inner += '<span class="slide-tag"><i class="fas fa-tag"></i>' + escapeHtml(promo.tag) + '</span>';
+        if (promo.title) inner += '<h2>' + escapeHtml(promo.title) + '</h2>';
+        if (promo.desc)  inner += '<p>'  + escapeHtml(promo.desc)  + '</p>';
+        content.innerHTML = inner;
+        slide.appendChild(content);
+
+        slidesEl.appendChild(slide);
+
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'dot' + (index === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Ir a la publicidad ' + (index + 1));
+        dot.addEventListener('click', function () {
+            goToSlide(index);
+            startRotation();
+        });
+        dotsEl.appendChild(dot);
+    });
+
+    slideIndex = 0;
+    dotsEl.style.display = lista.length <= 1 ? 'none' : 'flex';
+}
+
+function goToSlide(index) {
+    const slides = slidesEl.children;
+    const dots   = dotsEl.children;
+    const total  = slides.length;
+    if (!total) return;
+    slideIndex = ((index % total) + total) % total;
+    for (let i = 0; i < total; i++) {
+        slides[i].classList.toggle('active', i === slideIndex);
+        if (dots[i]) dots[i].classList.toggle('active', i === slideIndex);
+    }
+}
+
+function startRotation() {
+    stopRotation();
+    if (promos.length < 2) return;
+    rotateTimer = setInterval(function () { goToSlide(slideIndex + 1); }, rotationMs);
+}
+
+function stopRotation() {
+    if (rotateTimer) { clearInterval(rotateTimer); rotateTimer = null; }
+}
+
+document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stopRotation();
+    else if (currentView === 'idle') startRotation();
+});
+
+/* ============================================================
+   GESTIÓN DE VISTAS
+   ============================================================ */
+let currentView = null;
+
+function setView(name) {
+    if (currentView === name) return;
+    currentView = name;
+    viewIdle.classList.toggle('active', name === 'idle');
+    viewCart.classList.toggle('active', name === 'cart');
+    if (name === 'idle') startRotation();
+    else stopRotation();
+}
+
+/* ============================================================
+   ESTADO / BADGE
+   ============================================================ */
+function setStatusBadge(status) {
+    let text = 'Esperando', cls = 'waiting', icon = 'fa-hourglass-half';
+    if (status === 'SHOPPING')  { text = 'Comprando';    cls = 'buying';  icon = 'fa-cart-shopping'; }
+    if (status === 'COMPLETED') { text = 'Pago exitoso'; cls = 'success'; icon = 'fa-circle-check';  }
+    statusBadge.className = 'status-badge ' + cls;
+    statusBadge.innerHTML = '<i class="fas ' + icon + '"></i><span>' + escapeHtml(text) + '</span>';
+}
+
+/* ============================================================
+   NORMALIZACIÓN DE DATOS DEL CARRITO
+   ============================================================ */
+function normalizeItem(raw) {
+    if (!raw || typeof raw !== 'object') return { name:'', price:0, qty:0, subtotal:0, code:'' };
+    const name = String(pick(raw.name, raw.nombre, raw.product, raw.producto,
+                             raw.description, raw.descripcion, raw.descripcionProducto) || '');
+    const price = num(pick(raw.price, raw.precio, raw.unitPrice, raw.precioUnitario,
+                           raw.precio_unitario, raw.precioVenta));
+    const qty = num(pick(raw.qty, raw.quantity, raw.cantidad, raw.units, raw.unidades));
+    const finalQty = qty > 0 ? qty : 1;
+    const subRaw = pick(raw.subtotal, raw.total, raw.importe, raw.monto);
+    const subtotal = subRaw !== undefined ? num(subRaw) : price * finalQty;
+    const code = String(pick(raw.code, raw.codigo, raw.barcode, raw.codigoBarras, raw.sku) || '');
+    return { name, price, qty: finalQty, subtotal, code };
+}
+
+/* ============================================================
+   CONSTRUCCIÓN DEL CARRITO
+   ============================================================ */
+function buildCartItemsHTML(items) {
+    let html = '';
+    items.forEach(function (item, index) {
+        const delay = Math.min(index * 30, 300);
+        html += '<div class="cart-item" style="animation-delay:' + delay + 'ms">';
+        html += '<span class="qty-badge">' + escapeHtml(fmtQty(item.qty)) + '</span>';
+        html += '<div class="item-name">';
+        html += '<span class="name">' + escapeHtml(item.name || 'Producto') + '</span>';
+        if (item.code) html += '<span class="code">' + escapeHtml(item.code) + '</span>';
+        html += '</div>';
+        html += '<span class="unit">' + escapeHtml(fmtUSD(item.price)) + ' <small>c/u</small></span>';
+        html += '<span class="subtotal">' + escapeHtml(fmtUSD(item.subtotal)) + '</span>';
+        html += '</div>';
+    });
+    return html;
+}
+
+function buildTotalsHTML(totals) {
+    const hasPaid = totals.paid > 0;
+    let html = '';
+    html += '<div class="totals-title">Resumen de la compra</div>';
+    html += '<div class="totals-card">';
+    html += '<div class="t-row"><span>Productos</span><strong>' + escapeHtml(String(totals.count)) + '</strong></div>';
+    html += '<div class="t-row"><span>Total en dólares</span><strong>' + escapeHtml(fmtUSD(totals.totalUSD)) + '</strong></div>';
+    html += '<div class="t-row bs"><span>Total en bolívares</span><strong>' + escapeHtml(fmtBS(totals.totalBS)) + '</strong></div>';
+    html += '</div>';
+    html += '<div class="totals-card">';
+    html += '<div class="t-row"><span>Monto pagado</span><strong>' + escapeHtml(hasPaid ? fmtUSD(totals.paid) : '—') + '</strong></div>';
+    html += '<div class="t-row change"><span>Vuelto / Cambio</span><strong>' + escapeHtml(hasPaid ? fmtUSD(totals.change) : '—') + '</strong></div>';
+    html += '</div>';
+    html += '<div class="t-grand"><span>Total a pagar</span><span>' + escapeHtml(fmtUSD(totals.totalUSD)) + '</span></div>';
+    html += '<div class="rate-chip"><i class="fas fa-arrow-right-arrow-left"></i><span>Tasa: 1 $ = ' + escapeHtml(fmtNum(totals.rate)) + ' Bs</span></div>';
+    return html;
+}
+
+/* ============================================================
+   RENDER PRINCIPAL DEL CARRITO
+   ============================================================ */
+let lastSignature = '';
+
+function render(raw) {
+    const status = String(pick(raw.status, raw.state, raw.estado, 'CLEAR')).toUpperCase();
+
+    let rawItems = [];
+    if (Array.isArray(raw.cart))           rawItems = raw.cart;
+    else if (Array.isArray(raw.items))     rawItems = raw.items;
+    else if (Array.isArray(raw.products))  rawItems = raw.products;
+    else if (Array.isArray(raw.productos)) rawItems = raw.productos;
+
+    const items = rawItems.map(normalizeItem).filter(function (it) { return it.name && it.qty !== 0; });
+
+    const rate = num(pick(raw.exchangeRate, raw.exchange_rate, raw.rate, raw.tasa,
+                          raw.tasaCambio, raw.rateBs));
+
+    const sumSubtotals = items.reduce(function (a, it) { return a + it.subtotal; }, 0);
+
+    const totalUSDRaw = pick(raw.totalUSD, raw.totalUsd, raw.total_usd, raw.total,
+                             raw.montoTotal, raw.totalGeneral);
+    const totalUSD = totalUSDRaw !== undefined ? num(totalUSDRaw) : sumSubtotals;
+
+    const totalBSRaw = pick(raw.totalBS, raw.totalBs, raw.total_bs, raw.totalBolivares);
+    const totalBS = totalBSRaw !== undefined ? num(totalBSRaw) : (rate ? totalUSD * rate : 0);
+
+    const paid = num(pick(raw.amountPaid, raw.amount_paid, raw.paid, raw.montoPagado,
+                          raw.pago, raw.paidAmount));
+
+    const changeRaw = pick(raw.change, raw.vuelto, raw.cambio, raw.changeUSD);
+    const change = changeRaw !== undefined ? num(changeRaw)
+                 : (paid > 0 ? Math.max(paid - totalUSD, 0) : 0);
+
+    const totals = { count: items.length, totalUSD, totalBS, paid, change, rate };
+
+    setStatusBadge(status);
+    footerRateEl.textContent = rate > 0 ? 'Tasa: 1 $ = ' + fmtNum(rate) + ' Bs' : 'Tasa: 1 $ = — Bs';
+
+    const hasItems = items.length > 0;
+    const showCartView = (status === 'COMPLETED') || (hasItems && status !== 'CLEAR');
+    const desiredView = showCartView ? 'cart' : 'idle';
+
+    const signature = JSON.stringify({ v: desiredView, s: status, i: items, t: totals });
+    if (signature === lastSignature && currentView === desiredView) return;
+    lastSignature = signature;
+
+    setView(desiredView);
+
+    if (desiredView === 'idle') { successBanner.classList.remove('show'); return; }
+
+    if (status === 'COMPLETED') successBanner.classList.add('show');
+    else successBanner.classList.remove('show');
+
+    cartItemsEl.innerHTML = buildCartItemsHTML(items);
+    totalsPanelEl.innerHTML = buildTotalsHTML(totals);
+}
+
+/* ============================================================
+   BROADCAST CHANNEL · SYNC DEL CARRITO CON EL POS
+   ============================================================ */
+const channel = new BroadcastChannel('pos_client_display');
+
+channel.onmessage = function (event) {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'REQUEST_CURRENT_STATE') return;
+    if (data.payload && typeof data.payload === 'object') { render(data.payload); return; }
+    render(data);
+};
+
+function requestCurrentState() {
+    try {
+        channel.postMessage({
+            type: 'REQUEST_CURRENT_STATE',
+            source: 'client_display',
+            timestamp: Date.now()
+        });
+    } catch (err) {}
+}
+
+/* ============================================================
+   ARRANQUE
+   ============================================================ */
+buildCarousel();
+setView('idle');
+setStatusBadge('CLEAR');
+startRotation();
+
+requestCurrentState();
+setTimeout(requestCurrentState, 700);
+setTimeout(requestCurrentState, 2000);
+setTimeout(requestCurrentState, 5000);
+setInterval(requestCurrentState, 30000);
+
+/* ============================================================
+   FIREBASE · PUBLICIDAD EN TIEMPO REAL
+   ------------------------------------------------------------
+   Escucha el nodo "publicidad" de Realtime Database.
+   Estructura esperada:
+   publicidad: {
+       rotationMs: 4000,
+       slides: [ { img, tag, title, desc, active }, ... ]
+   }
+   ============================================================ */
+if (db) {
+    const publicidadRef = ref(db, 'publicidad');
+    onValue(publicidadRef, function (snap) {
+        const data = snap.val();
+        if (!data) return;
+
+        const ms = Number(data.rotationMs);
+        if (ms >= 1500) rotationMs = ms;
+
+        const rawSlides = Array.isArray(data.slides) ? data.slides : [];
+        promos = rawSlides
+            .filter(function (s) { return s && typeof s === 'object' && s.active !== false && s.img; })
+            .map(function (s) {
+                return {
+                    img:   String(s.img   || ''),
+                    tag:   String(s.tag   || ''),
+                    title: String(s.title || ''),
+                    desc:  String(s.desc  || '')
+                };
+            });
+
+        buildCarousel();
+        if (currentView === 'idle') startRotation();
+    });
+}
+</script>
+
+</body>
+</html>
