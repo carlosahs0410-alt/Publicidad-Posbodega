@@ -43,6 +43,78 @@ body {
     padding-bottom: 60px;
 }
 
+/* ============================ BLOQUEO ============================ */
+body.locked { overflow:hidden; }
+body.locked .topbar,
+body.locked .layout { display:none !important; }
+
+.overlay {
+    position:fixed; inset:0; z-index:200;
+    display:none; align-items:center; justify-content:center;
+    padding:22px; overflow-y:auto;
+    background:
+        radial-gradient(circle at 15% -5%, #1b2b47 0%, transparent 55%),
+        radial-gradient(circle at 88% 8%, #14233a 0%, transparent 50%),
+        rgba(3,7,18,.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.overlay.on { display:flex; }
+
+.lock-card {
+    width:100%; max-width:410px; margin:auto;
+    padding:30px 26px 24px; border-radius:20px;
+    background:linear-gradient(180deg,rgba(21,34,56,.98),rgba(12,20,34,.98));
+    border:1px solid var(--line);
+    box-shadow:0 40px 90px -46px rgba(0,0,0,1);
+    animation:cardIn .32s ease both;
+}
+
+.lock-icon {
+    width:64px; height:64px; border-radius:20px; display:grid; place-items:center;
+    margin:0 auto 18px; font-size:1.5rem; color:#fff;
+    background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#38bdf8);
+    box-shadow:0 16px 34px -16px rgba(56,189,248,.9);
+}
+
+.lock-card h2 {
+    font-size:1.06rem; font-weight:800; letter-spacing:.01em;
+    text-align:center; line-height:1.25;
+}
+.lock-card .sub {
+    margin-top:7px; font-size:.8rem; line-height:1.55;
+    color:var(--muted); text-align:center; font-weight:500;
+}
+.lock-card .f-row { text-align:left; margin-top:18px; }
+.lock-card .f-row + .f-row { margin-top:12px; }
+
+.lock-foot {
+    margin-top:18px; text-align:center; font-size:.66rem; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; color:#42566f;
+}
+
+.pass-wrap { position:relative; }
+.pass-wrap input { padding-right:44px; }
+.eye {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:32px; height:32px; display:grid; place-items:center;
+    border:none; background:transparent; color:var(--muted);
+    font-size:.82rem; cursor:pointer; border-radius:9px; transition:.16s ease;
+}
+.eye:hover { color:#fff; background:#1c2d48; }
+
+.btn.block {
+    width:100%; justify-content:center; margin-top:18px; padding:12px 16px;
+}
+.lock-actions { display:flex; gap:10px; margin-top:18px; }
+.lock-actions .btn { flex:1; justify-content:center; }
+
+.lock-msg {
+    margin-top:12px; min-height:17px; text-align:center;
+    font-size:.78rem; font-weight:600; color:var(--err); line-height:1.4;
+}
+.lock-msg.ok { color:var(--ok); }
+
 /* ============================ TOPBAR ============================ */
 .topbar {
     position: sticky;
@@ -164,14 +236,17 @@ body {
 .f-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:12px; }
 
 input[type="text"],
+input[type="password"],
 textarea {
     width:100%; padding:10px 13px; border-radius:10px; border:1px solid var(--line);
     background:#0c1626; color:var(--txt); font:inherit; font-size:.88rem; font-weight:500;
     outline:none; transition:border-color .16s,box-shadow .16s; resize:vertical;
 }
 input[type="text"]::placeholder,
+input[type="password"]::placeholder,
 textarea::placeholder { color:#4c5f7c; }
 input[type="text"]:focus,
+input[type="password"]:focus,
 textarea:focus {
     border-color:var(--brand); box-shadow:0 0 0 3px rgba(37,99,235,.22);
 }
@@ -357,11 +432,72 @@ input[type="range"]::-moz-range-thumb {
     .slide-card { grid-template-columns:1fr; gap:14px; }
     .card-actions { flex-direction:row; justify-content:flex-end; align-self:auto; }
     .f-grid { grid-template-columns:1fr; }
+    .lock-card { padding:24px 18px 20px; }
 }
 </style>
 </head>
 
-<body>
+<body class="locked">
+
+<!-- ============================ BLOQUEO DE ACCESO ============================ -->
+<div class="overlay on" id="lockScreen">
+    <form class="lock-card" id="lockForm" autocomplete="off">
+        <div class="lock-icon"><i class="fas fa-lock"></i></div>
+        <h2>Panel de Publicidad</h2>
+        <p class="sub">Acceso restringido. Ingresa la contraseña para administrar los banners del visor.</p>
+
+        <div class="f-row">
+            <label for="lockPass">Contraseña</label>
+            <div class="pass-wrap">
+                <input type="password" id="lockPass" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="eye" data-eye="lockPass" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
+        </div>
+
+        <button class="btn primary block" type="submit"><i class="fas fa-unlock"></i> Desbloquear</button>
+        <p class="lock-msg" id="lockMsg"></p>
+        <p class="lock-foot">POS Bodega · Zona privada</p>
+    </form>
+</div>
+
+<!-- ============================ CAMBIAR CONTRASEÑA ============================ -->
+<div class="overlay" id="pwdModal">
+    <form class="lock-card" id="pwdForm" autocomplete="off">
+        <div class="lock-icon"><i class="fas fa-key"></i></div>
+        <h2>Cambiar contraseña</h2>
+        <p class="sub">Se guardará y se aplicará en todos los dispositivos conectados.</p>
+
+        <div class="f-row">
+            <label for="pwdActual">Contraseña actual</label>
+            <div class="pass-wrap">
+                <input type="password" id="pwdActual" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="eye" data-eye="pwdActual" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
+        </div>
+
+        <div class="f-row">
+            <label for="pwdNueva">Nueva contraseña</label>
+            <div class="pass-wrap">
+                <input type="password" id="pwdNueva" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+                <button type="button" class="eye" data-eye="pwdNueva" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
+        </div>
+
+        <div class="f-row">
+            <label for="pwdConfirmar">Repetir nueva contraseña</label>
+            <div class="pass-wrap">
+                <input type="password" id="pwdConfirmar" placeholder="••••••••" autocomplete="new-password">
+                <button type="button" class="eye" data-eye="pwdConfirmar" tabindex="-1"><i class="fas fa-eye"></i></button>
+            </div>
+        </div>
+
+        <div class="lock-actions">
+            <button class="btn ghost" type="button" id="pwdCancel"><i class="fas fa-xmark"></i> Cancelar</button>
+            <button class="btn primary" type="submit"><i class="fas fa-floppy-disk"></i> Guardar</button>
+        </div>
+        <p class="lock-msg" id="pwdMsg"></p>
+    </form>
+</div>
 
 <!-- ============================ TOPBAR ============================ -->
 <header class="topbar">
@@ -379,6 +515,12 @@ input[type="range"]::-moz-range-thumb {
         </button>
         <button class="btn ghost" id="btnReload" title="Volver a cargar desde Firebase">
             <i class="fas fa-rotate"></i><span>Recargar</span>
+        </button>
+        <button class="btn ghost" id="btnPwd" title="Cambiar la contraseña del panel">
+            <i class="fas fa-key"></i><span>Contraseña</span>
+        </button>
+        <button class="btn ghost" id="btnLock" title="Bloquear el panel">
+            <i class="fas fa-lock"></i><span>Bloquear</span>
         </button>
         <button class="btn primary" id="btnSave">
             <i class="fas fa-cloud-arrow-up"></i><span>Publicar ahora</span>
@@ -472,6 +614,72 @@ const storage = getStorage(app);
 const DB_PATH = 'publicidad';
 
 /* ============================================================
+   SEGURIDAD
+   ============================================================ */
+const AUTH_PATH    = 'panelAuth';           // nodo en RTDB donde vive la contraseña
+const LS_KEY       = 'pos_panel_auth_v1';   // respaldo local
+const DEFAULT_PASS = 'admin123';            // contraseña inicial (cámbiala al entrar)
+
+let authHash    = null;   // hash vigente
+let authReady   = null;   // promesa de carga inicial
+let panelListo  = false;  // evita recargar datos al re-desbloquear
+
+/* Hash determinista (cyrb53 con sal) — suficiente para un panel interno */
+function hashPass(str) {
+    const salted = 'pos-bodega::' + String(str);
+    let h1 = 0xdeadbeef ^ salted.length;
+    let h2 = 0x41c6ce57 ^ salted.length;
+    for (let i = 0; i < salted.length; i++) {
+        const ch = salted.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+
+/* Lee la contraseña desde Firebase; si no existe usa localStorage o la de fábrica */
+async function cargarAuth() {
+    let hash = null;
+
+    try {
+        const snap = await get(ref(db, AUTH_PATH));
+        const data = snap.val();
+        if (data && typeof data.password === 'string' && data.password) {
+            hash = data.password;
+        }
+    } catch (err) {
+        console.warn('No se pudo leer panelAuth:', err);
+    }
+
+    if (!hash) {
+        try { hash = localStorage.getItem(LS_KEY) || null; } catch (e) {}
+    }
+    if (!hash) {
+        hash = hashPass(DEFAULT_PASS);
+    }
+
+    authHash = hash;
+    try { localStorage.setItem(LS_KEY, hash); } catch (e) {}
+    return hash;
+}
+
+/* Guarda la nueva contraseña en Firebase + localStorage */
+async function guardarAuth(nuevoHash) {
+    authHash = nuevoHash;
+    try { localStorage.setItem(LS_KEY, nuevoHash); } catch (e) {}
+
+    try {
+        await set(ref(db, AUTH_PATH), { password: nuevoHash, updatedAt: Date.now() });
+        return true;
+    } catch (err) {
+        console.warn('No se pudo guardar la contraseña en Firebase:', err);
+        return false;
+    }
+}
+
+/* ============================================================
    ESTADO
    ============================================================ */
 let state = {
@@ -498,6 +706,18 @@ const pvTag      = document.getElementById('pvTag');
 const pvTitle    = document.getElementById('pvTitle');
 const pvDesc     = document.getElementById('pvDesc');
 const pvDots     = document.getElementById('pvDots');
+
+const lockScreen = document.getElementById('lockScreen');
+const lockForm   = document.getElementById('lockForm');
+const lockPass   = document.getElementById('lockPass');
+const lockMsg    = document.getElementById('lockMsg');
+
+const pwdModal   = document.getElementById('pwdModal');
+const pwdForm    = document.getElementById('pwdForm');
+const pwdActual  = document.getElementById('pwdActual');
+const pwdNueva   = document.getElementById('pwdNueva');
+const pwdConfirm = document.getElementById('pwdConfirmar');
+const pwdMsg     = document.getElementById('pwdMsg');
 
 /* ============================================================
    UTILIDADES
@@ -886,6 +1106,138 @@ setInterval(() => {
 }, 3500);
 
 /* ============================================================
+   BLOQUEO / DESBLOQUEO
+   ============================================================ */
+async function desbloquearPanel() {
+    document.body.classList.remove('locked');
+    lockScreen.classList.remove('on');
+    lockPass.value = '';
+    lockMsg.textContent = '';
+    lockMsg.className = 'lock-msg';
+
+    if (!panelListo) {
+        panelListo = true;
+        await cargarDesdeFirebase();
+    }
+}
+
+function bloquearPanel() {
+    lockPass.value = '';
+    lockMsg.textContent = '';
+    lockMsg.className = 'lock-msg';
+    document.body.classList.add('locked');
+    lockScreen.classList.add('on');
+    setTimeout(() => lockPass.focus(), 60);
+}
+
+lockForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    lockMsg.className = 'lock-msg';
+
+    const pass = lockPass.value;
+    if (!pass) {
+        lockMsg.textContent = 'Escribe la contraseña.';
+        return;
+    }
+
+    lockMsg.textContent = 'Verificando…';
+    lockMsg.className = 'lock-msg ok';
+
+    await authReady;   // asegura que ya se leyó la contraseña vigente
+
+    if (hashPass(pass) === authHash) {
+        await desbloquearPanel();
+        toast('Bienvenido al panel de publicidad', 'ok');
+    } else {
+        lockMsg.className = 'lock-msg';
+        lockMsg.textContent = 'Contraseña incorrecta. Inténtalo de nuevo.';
+        lockPass.value = '';
+        lockPass.focus();
+    }
+});
+
+/* ============================================================
+   CAMBIAR CONTRASEÑA
+   ============================================================ */
+function abrirPwdModal() {
+    pwdForm.reset();
+    pwdMsg.textContent = '';
+    pwdMsg.className = 'lock-msg';
+    pwdModal.classList.add('on');
+    setTimeout(() => pwdActual.focus(), 60);
+}
+
+function cerrarPwdModal() {
+    pwdModal.classList.remove('on');
+    pwdForm.reset();
+    pwdMsg.textContent = '';
+    pwdMsg.className = 'lock-msg';
+}
+
+pwdForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    pwdMsg.className = 'lock-msg';
+    await authReady;
+
+    const actual = pwdActual.value;
+    const nueva  = pwdNueva.value;
+    const conf   = pwdConfirm.value;
+
+    if (!actual || !nueva || !conf) {
+        pwdMsg.textContent = 'Completa los tres campos.';
+        return;
+    }
+    if (hashPass(actual) !== authHash) {
+        pwdMsg.textContent = 'La contraseña actual no es correcta.';
+        return;
+    }
+    if (nueva.length < 4) {
+        pwdMsg.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+        return;
+    }
+    if (nueva === actual) {
+        pwdMsg.textContent = 'La nueva contraseña debe ser distinta a la actual.';
+        return;
+    }
+    if (nueva !== conf) {
+        pwdMsg.textContent = 'Las contraseñas nuevas no coinciden.';
+        return;
+    }
+
+    pwdMsg.className = 'lock-msg ok';
+    pwdMsg.textContent = 'Guardando…';
+
+    const ok = await guardarAuth(hashPass(nueva));
+
+    if (ok) {
+        pwdMsg.textContent = 'Contraseña actualizada correctamente.';
+        toast('Contraseña actualizada', 'ok');
+        setTimeout(cerrarPwdModal, 900);
+    } else {
+        pwdMsg.className = 'lock-msg ok';
+        pwdMsg.textContent = 'Guardada en este dispositivo (no se pudo escribir en Firebase).';
+        toast('Guardada solo en este equipo', 'warn');
+        setTimeout(cerrarPwdModal, 1600);
+    }
+});
+
+document.getElementById('pwdCancel').addEventListener('click', cerrarPwdModal);
+pwdModal.addEventListener('click', (e) => { if (e.target === pwdModal) cerrarPwdModal(); });
+
+/* ============================================================
+   MOSTRAR / OCULTAR CONTRASEÑAS
+   ============================================================ */
+document.querySelectorAll('[data-eye]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const inp = document.getElementById(btn.dataset.eye);
+        if (!inp) return;
+        const mostrar = inp.type === 'password';
+        inp.type = mostrar ? 'text' : 'password';
+        btn.innerHTML = `<i class="fas ${mostrar ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
+    });
+});
+
+/* ============================================================
    ACCIONES DE LA BARRA SUPERIOR
    ============================================================ */
 document.getElementById('btnAdd').addEventListener('click', () => {
@@ -914,6 +1266,13 @@ document.getElementById('btnPreview').addEventListener('click', () => {
     window.open('cliente.html', '_blank');
 });
 
+document.getElementById('btnPwd').addEventListener('click', abrirPwdModal);
+
+document.getElementById('btnLock').addEventListener('click', () => {
+    if (dirty && !confirm('Hay cambios sin publicar. ¿Bloquear de todas formas?')) return;
+    bloquearPanel();
+});
+
 rotRange.addEventListener('input', () => {
     const ms = Number(rotRange.value);
     state.rotationMs = ms;
@@ -924,7 +1283,9 @@ rotRange.addEventListener('input', () => {
 /* ============================================================
    INICIO
    ============================================================ */
-cargarDesdeFirebase();
+authReady = cargarAuth().then(() => {
+    setTimeout(() => lockPass.focus(), 120);
+});
 
 /* Aviso al salir con cambios sin publicar */
 window.addEventListener('beforeunload', (e) => {
