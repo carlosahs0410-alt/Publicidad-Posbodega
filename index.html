@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Publicidad · POS Bodega</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+*,
+*::before,
+*::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    --panel:      #111c2f;
+    --panel-2:    #152238;
+    --line:       #22334d;
+    --line-soft:  #1a2a42;
+    --txt:        #e2e8f0;
+    --txt-soft:   #b6c2d4;
+    --muted:      #8296b0;
+    --brand:      #2563eb;
+    --sky:        #38bdf8;
+    --ok:         #10b981;
+    --warn:       #f59e0b;
+    --err:        #ef4444;
+    --r:          16px;
+}
+
+body {
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    background:
+        radial-gradient(circle at 12% -5%, #1b2b47 0%, transparent 55%),
+        radial-gradient(circle at 92% 0%, #14233a 0%, transparent 50%),
+        #070c16;
+    background-attachment: fixed;
+    color: var(--txt);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 60px;
+}
+
+/* ============================ TOPBAR ============================ */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 14px 26px;
+    background: rgba(9,15,27,.9);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+}
+
+.brand { display:flex; align-items:center; gap:14px; }
+
+.brand-icon {
+    width:46px; height:46px; border-radius:14px; display:grid; place-items:center;
+    font-size:1.2rem; color:#fff;
+    background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#38bdf8);
+    box-shadow:0 12px 26px -12px rgba(56,189,248,.9);
+}
+
+.brand h1 {
+    font-size:1.02rem; font-weight:800; letter-spacing:.10em;
+    text-transform:uppercase; line-height:1.2;
+}
+.brand span {
+    display:block; font-size:.68rem; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+}
+.topbar-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+/* ============================ BOTONES ============================ */
+.btn {
+    display:inline-flex; align-items:center; gap:8px; padding:10px 16px;
+    border-radius:12px; border:1px solid var(--line); background:var(--panel-2);
+    color:var(--txt-soft); font:inherit; font-size:.84rem; font-weight:600;
+    cursor:pointer; white-space:nowrap; transition:.18s ease;
+}
+.btn:hover { background:#1c2d48; color:#fff; border-color:#2d4262; }
+.btn:active { transform:translateY(1px); }
+.btn.primary {
+    background:linear-gradient(120deg,#2563eb,#38bdf8); border-color:transparent; color:#fff;
+    box-shadow:0 12px 26px -12px rgba(37,99,235,.95);
+}
+.btn.primary:hover { filter:brightness(1.08); }
+.btn.tiny { padding:7px 11px; font-size:.76rem; border-radius:10px; }
+.btn.ghost { background:transparent; }
+
+/* ============================ LAYOUT ============================ */
+.layout {
+    max-width:1420px; margin:0 auto; padding:24px 26px;
+    display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:22px; align-items:start;
+}
+.toolbar {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px; margin-bottom:16px;
+}
+.toolbar h2 {
+    font-size:.74rem; font-weight:800; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:10px;
+}
+.pill {
+    padding:3px 10px; border-radius:999px;
+    background:rgba(56,189,248,.14); border:1px solid rgba(56,189,248,.35);
+    color:var(--sky); font-size:.68rem; font-weight:800;
+}
+
+/* ============================ TARJETA DE SLIDE ============================ */
+.slide-card {
+    display:grid; grid-template-columns:250px minmax(0,1fr) 48px; gap:18px;
+    padding:16px; margin-bottom:14px; border-radius:var(--r);
+    background:linear-gradient(180deg,rgba(21,34,56,.95),rgba(15,25,42,.95));
+    border:1px solid var(--line); box-shadow:0 20px 40px -28px rgba(0,0,0,.9);
+    transition:border-color .2s ease, opacity .2s ease;
+    animation:cardIn .28s ease both;
+}
+@keyframes cardIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.slide-card:hover { border-color:#2b3f5e; }
+.slide-card.is-off { opacity:.55; }
+
+.thumb {
+    position:relative; aspect-ratio:16/9; border-radius:12px; overflow:hidden;
+    background:#0a1120; border:1px solid var(--line-soft);
+}
+.thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.thumb-empty {
+    width:100%; height:100%; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:8px; color:#3f5473; font-size:.72rem; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    background:repeating-linear-gradient(45deg,#0d1728 0 12px,#101c30 12px 24px);
+}
+.thumb-empty i { font-size:1.4rem; }
+.thumb-pos {
+    position:absolute; top:8px; left:8px; padding:3px 9px; border-radius:999px;
+    background:rgba(3,7,18,.72); backdrop-filter:blur(6px); color:#fff;
+    font-size:.68rem; font-weight:800;
+}
+.thumb-off {
+    position:absolute; top:8px; right:8px; padding:3px 9px; border-radius:999px;
+    background:rgba(239,68,68,.9); color:#fff; font-size:.64rem; font-weight:800;
+    letter-spacing:.08em; text-transform:uppercase;
+}
+
+.fields { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.f-row { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.f-row > label {
+    font-size:.66rem; font-weight:800; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--muted);
+}
+.f-grid { display:grid; grid-template-columns:1fr 1.4fr; gap:12px; }
+
+input[type="text"],
+textarea {
+    width:100%; padding:10px 13px; border-radius:10px; border:1px solid var(--line);
+    background:#0c1626; color:var(--txt); font:inherit; font-size:.88rem; font-weight:500;
+    outline:none; transition:border-color .16s,box-shadow .16s; resize:vertical;
+}
+input[type="text"]::placeholder,
+textarea::placeholder { color:#4c5f7c; }
+input[type="text"]:focus,
+textarea:focus {
+    border-color:var(--brand); box-shadow:0 0 0 3px rgba(37,99,235,.22);
+}
+
+.file-row { display:flex; gap:8px; align-items:stretch; }
+.file-row input { flex:1; }
+
+.card-actions { display:flex; flex-direction:column; gap:6px; align-self:flex-start; }
+.icon-btn {
+    width:36px; height:36px; display:grid; place-items:center; border-radius:10px;
+    border:1px solid var(--line); background:#0e1a2c; color:var(--muted);
+    font-size:.82rem; cursor:pointer; transition:.16s ease;
+}
+.icon-btn:hover { background:#1c2d48; color:#fff; border-color:#2d4262; }
+.icon-btn.danger:hover {
+    background:rgba(239,68,68,.16); color:#fca5a5;
+    border-color:rgba(239,68,68,.5);
+}
+.icon-btn.on {
+    background:rgba(56,189,248,.16); color:var(--sky);
+    border-color:rgba(56,189,248,.4);
+}
+
+/* ============================ ESTADO VACÍO ============================ */
+.empty {
+    padding:60px 24px; text-align:center; border:1.5px dashed var(--line);
+    border-radius:var(--r); color:var(--muted);
+}
+.empty i { font-size:2.2rem; color:#31465f; margin-bottom:14px; display:block; }
+.empty p { font-size:.9rem; font-weight:600; }
+.empty small { display:block; margin-top:6px; font-size:.78rem; color:#5b6f8c; }
+
+/* ============================ SIDEBAR ============================ */
+.side { display:flex; flex-direction:column; gap:16px; position:sticky; top:92px; }
+.card {
+    border-radius:var(--r);
+    background:linear-gradient(180deg,rgba(21,34,56,.95),rgba(15,25,42,.95));
+    border:1px solid var(--line); padding:18px;
+    box-shadow:0 20px 40px -30px rgba(0,0,0,.9);
+}
+.card h3 {
+    display:flex; align-items:center; gap:9px; font-size:.7rem; font-weight:800;
+    letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;
+}
+.card h3 i { color:var(--sky); font-size:.82rem; }
+
+/* Vista previa */
+.preview {
+    position:relative; aspect-ratio:16/9; border-radius:12px; overflow:hidden;
+    background:#070c16; border:1px solid var(--line-soft);
+}
+.preview-slide {
+    position:absolute; inset:0; background-size:cover; background-position:center;
+    transition:background-image .45s ease; background-color:#0b1220;
+}
+.preview-overlay {
+    position:absolute; inset:0;
+    background:
+        linear-gradient(to top,rgba(3,7,18,.96) 0%,rgba(3,7,18,.7) 30%,rgba(3,7,18,.12) 68%,rgba(3,7,18,0) 100%),
+        linear-gradient(to right,rgba(3,7,18,.7) 0%,rgba(3,7,18,0) 70%);
+}
+.preview-content {
+    position:absolute; left:0; right:0; bottom:0;
+    padding:14px 16px; z-index:2;
+}
+.preview-content .ptag {
+    display:inline-block; margin-bottom:7px; padding:3px 10px; border-radius:999px;
+    background:linear-gradient(120deg,#2563eb,#38bdf8); font-size:.56rem; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase; color:#fff;
+}
+.preview-content .ptag:empty { display:none; }
+.preview-content h4 {
+    font-size:.98rem; font-weight:800; line-height:1.2; letter-spacing:-.01em;
+    color:#fff; text-shadow:0 3px 16px rgba(0,0,0,.75);
+}
+.preview-content p {
+    margin-top:4px; font-size:.68rem; line-height:1.4; font-weight:500;
+    color:rgba(255,255,255,.76); text-shadow:0 2px 10px rgba(0,0,0,.6);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.preview-dots {
+    position:absolute; right:12px; bottom:12px; z-index:3; display:flex; gap:5px;
+}
+.preview-dots span {
+    width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.38);
+    transition:.3s;
+}
+.preview-dots span.on { width:18px; background:#fff; }
+
+/* Ajustes */
+.range-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.range-row span { font-size:.76rem; font-weight:600; color:var(--txt-soft); }
+.range-row b {
+    font-size:.86rem; font-weight:800; color:var(--sky); font-variant-numeric:tabular-nums;
+}
+input[type="range"] {
+    width:100%; -webkit-appearance:none; appearance:none;
+    height:5px; border-radius:999px; background:#1e2f4a; outline:none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#38bdf8); cursor:pointer;
+    box-shadow:0 0 0 4px rgba(56,189,248,.18);
+}
+input[type="range"]::-moz-range-thumb {
+    width:17px; height:17px; border:none; border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#38bdf8); cursor:pointer;
+}
+
+/* Status */
+.status {
+    display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:11px;
+    background:#0c1626; border:1px solid var(--line);
+    font-size:.78rem; font-weight:600; color:var(--muted);
+}
+.status .sdot {
+    width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0;
+}
+.status.ok { color:#6ee7b7; border-color:rgba(16,185,129,.35); }
+.status.ok .sdot { background:var(--ok); box-shadow:0 0 0 4px rgba(16,185,129,.15); }
+.status.warn { color:#fcd34d; border-color:rgba(245,158,11,.35); }
+.status.warn .sdot { background:var(--warn); box-shadow:0 0 0 4px rgba(245,158,11,.15); }
+.status.err { color:#fca5a5; border-color:rgba(239,68,68,.4); }
+.status.err .sdot { background:var(--err); box-shadow:0 0 0 4px rgba(239,68,68,.15); }
+
+/* Ayuda */
+.help { font-size:.8rem; line-height:1.65; color:var(--txt-soft); }
+.help li { margin-left:16px; margin-bottom:7px; }
+.help code {
+    padding:2px 6px; border-radius:6px; background:#0c1626;
+    border:1px solid var(--line); font-size:.74rem; color:var(--sky);
+}
+
+/* Toast */
+.toast-wrap {
+    position:fixed; right:22px; bottom:22px; z-index:90;
+    display:flex; flex-direction:column; gap:10px; pointer-events:none;
+}
+.toast {
+    display:flex; align-items:center; gap:11px;
+    padding:13px 18px; border-radius:13px;
+    background:rgba(17,28,47,.97); border:1px solid var(--line);
+    box-shadow:0 20px 40px -18px rgba(0,0,0,.95);
+    font-size:.85rem; font-weight:600; color:var(--txt); max-width:360px;
+    animation:toastIn .3s cubic-bezier(.2,.9,.3,1.3) both;
+}
+.toast i { font-size:.95rem; }
+.toast.ok i { color:var(--ok); }
+.toast.warn i { color:var(--warn); }
+.toast.err i { color:var(--err); }
+.toast.out { animation:toastOut .25s ease forwards; }
+@keyframes toastIn {
+    from { opacity:0; transform:translateX(24px) scale(.96); }
+    to   { opacity:1; transform:translateX(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity:0; transform:translateX(24px) scale(.96); }
+}
+
+/* Overlay de carga */
+.loading {
+    position:fixed; inset:0; z-index:100; display:none; place-items:center;
+    background:rgba(3,7,18,.7); backdrop-filter:blur(4px);
+    font-size:.9rem; font-weight:600; color:#fff; letter-spacing:.05em;
+}
+.loading.on { display:grid; }
+.loading i {
+    font-size:2rem; margin-bottom:12px; display:block; text-align:center;
+    color:var(--sky); animation:spin 1s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Responsive */
+@media (max-width:1080px) {
+    .layout { grid-template-columns:1fr; padding:18px; }
+    .side { position:static; }
+    .slide-card { grid-template-columns:200px minmax(0,1fr) 48px; }
+}
+@media (max-width:720px) {
+    .topbar { padding:12px 16px; }
+    .topbar-actions .btn span { display:none; }
+    .topbar-actions .btn { padding:10px 13px; }
+    .slide-card { grid-template-columns:1fr; gap:14px; }
+    .card-actions { flex-direction:row; justify-content:flex-end; align-self:auto; }
+    .f-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================ TOPBAR ============================ -->
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-icon"><i class="fas fa-bullhorn"></i></div>
+        <div>
+            <h1>Panel de Publicidad</h1>
+            <span>Visor del Cliente · POS Bodega</span>
+        </div>
+    </div>
+
+    <div class="topbar-actions">
+        <button class="btn ghost" id="btnPreview" title="Abrir el visor del cliente">
+            <i class="fas fa-tv"></i><span>Ver visor</span>
+        </button>
+        <button class="btn ghost" id="btnReload" title="Volver a cargar desde Firebase">
+            <i class="fas fa-rotate"></i><span>Recargar</span>
+        </button>
+        <button class="btn primary" id="btnSave">
+            <i class="fas fa-cloud-arrow-up"></i><span>Publicar ahora</span>
+        </button>
+    </div>
+</header>
+
+<!-- ============================ LAYOUT ============================ -->
+<div class="layout">
+
+    <section>
+        <div class="toolbar">
+            <h2><i class="fas fa-images"></i> Banners <span class="pill" id="countPill">0</span></h2>
+            <button class="btn tiny" id="btnAdd"><i class="fas fa-plus"></i> Agregar banner</button>
+        </div>
+        <div id="list"></div>
+    </section>
+
+    <aside class="side">
+
+        <section class="card">
+            <h3><i class="fas fa-eye"></i> Vista previa</h3>
+            <div class="preview">
+                <div class="preview-slide" id="pvSlide"></div>
+                <div class="preview-overlay"></div>
+                <div class="preview-content">
+                    <span class="ptag" id="pvTag"></span>
+                    <h4 id="pvTitle">Sin banners activos</h4>
+                    <p id="pvDesc"></p>
+                </div>
+                <div class="preview-dots" id="pvDots"></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3><i class="fas fa-sliders"></i> Ajustes</h3>
+            <div class="range-row">
+                <span>Duración por banner</span>
+                <b id="rotLabel">4.0 s</b>
+            </div>
+            <input type="range" id="rotRange" min="1500" max="15000" step="500" value="4000">
+        </section>
+
+        <section class="card">
+            <h3><i class="fas fa-circle-info"></i> Estado</h3>
+            <div class="status" id="status">
+                <span class="sdot"></span>
+                <span id="statusText">Listo</span>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3><i class="fas fa-lightbulb"></i> Cómo funciona</h3>
+            <ul class="help">
+                <li>Pulsa <b>Agregar banner</b> y sube la foto. Se optimiza sola a 1600×1000.</li>
+                <li>Edita <b>etiqueta, título y descripción</b> (así se verá en el visor).</li>
+                <li>Usa <i class="fas fa-arrow-up"></i> <i class="fas fa-arrow-down"></i> para cambiar el orden.</li>
+                <li>Con <i class="fas fa-eye"></i> ocultas un banner sin borrarlo.</li>
+                <li>Pulsa <b>Publicar ahora</b> y el visor se actualiza solo (≤ 1 s).</li>
+            </ul>
+        </section>
+
+    </aside>
+</div>
+
+<input type="file" id="fileImage" accept="image/*" hidden>
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="loading" id="loading"><div><i class="fas fa-spinner"></i>Cargando…</div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-storage.js";
+
+/* ============================================================
+   FIREBASE
+   ============================================================ */
+const firebaseConfig = {
+    apiKey: "AIzaSyDASudwLXWE-QHDwBFhCaqsoTHG---IFjU",
+    authDomain: "pos-bodega-nube-2d862.firebaseapp.com",
+    databaseURL: "https://pos-bodega-nube-2d862-default-rtdb.firebaseio.com",
+    projectId: "pos-bodega-nube-2d862",
+    storageBucket: "pos-bodega-nube-2d862.firebasestorage.app",
+    messagingSenderId: "114620530032",
+    appId: "1:114620530032:web:71eef73efed06c68f2a3b5"
+};
+
+const app     = initializeApp(firebaseConfig);
+const db      = getDatabase(app);
+const storage = getStorage(app);
+const DB_PATH = 'publicidad';
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let state = {
+    rotationMs: 4000,
+    slides: []
+};
+let dirty = false;
+let saveTimer = null;
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const listEl     = document.getElementById('list');
+const countPill  = document.getElementById('countPill');
+const statusEl   = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const rotRange   = document.getElementById('rotRange');
+const rotLabel   = document.getElementById('rotLabel');
+const fileImage  = document.getElementById('fileImage');
+const toastWrap  = document.getElementById('toastWrap');
+const loadingEl  = document.getElementById('loading');
+const pvSlide    = document.getElementById('pvSlide');
+const pvTag      = document.getElementById('pvTag');
+const pvTitle    = document.getElementById('pvTitle');
+const pvDesc     = document.getElementById('pvDesc');
+const pvDots     = document.getElementById('pvDots');
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+const esc = (v) => String(v ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+const uid = () => 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+function toast(msg, tipo = 'ok') {
+    const iconos = { ok:'fa-circle-check', warn:'fa-triangle-exclamation', err:'fa-circle-xmark' };
+    const el = document.createElement('div');
+    el.className = 'toast ' + tipo;
+    el.innerHTML = `<i class="fas ${iconos[tipo]||iconos.ok}"></i><span>${esc(msg)}</span>`;
+    toastWrap.appendChild(el);
+    setTimeout(() => {
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 260);
+    }, 2800);
+}
+
+function setStatus(txt, tipo = '') {
+    statusText.textContent = txt;
+    statusEl.className = 'status' + (tipo ? ' ' + tipo : '');
+}
+
+/* ============================================================
+   CARGA INICIAL DESDE FIREBASE
+   ============================================================ */
+async function cargarDesdeFirebase() {
+    loadingEl.classList.add('on');
+    setStatus('Cargando…', '');
+    try {
+        const snap = await get(ref(db, DB_PATH));
+        const data = snap.val();
+
+        if (!data) {
+            state = { rotationMs: 4000, slides: [] };
+            setStatus('Sin datos en Firebase', 'warn');
+        } else {
+            const ms = Number(data.rotationMs);
+            state.rotationMs = ms >= 1500 ? ms : 4000;
+
+            const lista = Array.isArray(data.slides) ? data.slides : [];
+            state.slides = lista
+                .filter(s => s && typeof s === 'object')
+                .map(s => ({
+                    id:     s.id || uid(),
+                    img:    String(s.img   || ''),
+                    tag:    String(s.tag   || ''),
+                    title:  String(s.title || ''),
+                    desc:   String(s.desc  || ''),
+                    active: s.active !== false
+                }));
+
+            setStatus('Sincronizado', 'ok');
+        }
+
+        rotRange.value = state.rotationMs;
+        rotLabel.textContent = (state.rotationMs / 1000).toFixed(1) + ' s';
+        renderLista();
+        renderPreview();
+        dirty = false;
+    } catch (err) {
+        console.error(err);
+        setStatus('Error de conexión', 'err');
+        toast('No se pudo leer desde Firebase. Revisa las reglas.', 'err');
+    } finally {
+        loadingEl.classList.remove('on');
+    }
+}
+
+/* ============================================================
+   GUARDAR EN FIREBASE
+   ============================================================ */
+async function publicar(manual = true) {
+    clearTimeout(saveTimer);
+    setStatus('Publicando…', 'warn');
+
+    const payload = {
+        rotationMs: state.rotationMs,
+        updatedAt:  Date.now(),
+        slides: state.slides.map(s => ({
+            id:     s.id,
+            img:    s.img    || '',
+            tag:    s.tag    || '',
+            title:  s.title  || '',
+            desc:   s.desc   || '',
+            active: s.active !== false
+        }))
+    };
+
+    try {
+        await set(ref(db, DB_PATH), payload);
+        const hh = String(new Date().getHours()).padStart(2, '0');
+        const mm = String(new Date().getMinutes()).padStart(2, '0');
+        setStatus('Publicado · ' + hh + ':' + mm, 'ok');
+        dirty = false;
+        if (manual) toast('Publicidad enviada al visor del cliente', 'ok');
+    } catch (err) {
+        console.error(err);
+        setStatus('Error al publicar', 'err');
+        toast('No se pudo publicar. Revisa las reglas de RTDB.', 'err');
+    }
+}
+
+function marcarCambio() {
+    dirty = true;
+    setStatus('Cambios sin publicar', 'warn');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => publicar(false), 1200);
+}
+
+/* ============================================================
+   COMPRESIÓN DE IMAGEN
+   ============================================================ */
+const MAX_W = 1600, MAX_H = 1000, CALIDAD = 0.82;
+
+function comprimirImagen(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('Formato no válido'));
+            img.onload = () => {
+                let w = img.naturalWidth, h = img.naturalHeight;
+                const r = Math.min(MAX_W / w, MAX_H / h, 1);
+                w = Math.round(w * r);
+                h = Math.round(h * r);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0b1220';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+
+                canvas.toBlob(
+                    b => resolve({ blob: b, dataUrl: canvas.toDataURL('image/jpeg', CALIDAD) }),
+                    'image/jpeg',
+                    CALIDAD
+                );
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+/* ============================================================
+   RENDER DE LA LISTA
+   ============================================================ */
+function renderLista() {
+    const y = window.scrollY;
+    listEl.innerHTML = '';
+
+    if (!state.slides.length) {
+        listEl.innerHTML = `
+            <div class="empty">
+                <i class="fas fa-image"></i>
+                <p>Todavía no hay banners</p>
+                <small>Pulsa «Agregar banner» para crear el primero</small>
+            </div>`;
+    } else {
+        state.slides.forEach((s, i) => listEl.appendChild(crearTarjeta(s, i)));
+    }
+
+    countPill.textContent = state.slides.length;
+    window.scrollTo(0, y);
+}
+
+function crearTarjeta(slide, index) {
+    const el = document.createElement('article');
+    el.className = 'slide-card' + (slide.active === false ? ' is-off' : '');
+    el.dataset.index = index;
+
+    el.innerHTML = `
+        <div class="thumb">
+            ${slide.img
+                ? `<img src="${esc(slide.img)}" alt="">`
+                : `<div class="thumb-empty"><i class="fas fa-image"></i><span>Sin imagen</span></div>`}
+            <span class="thumb-pos">#${index + 1}</span>
+            ${slide.active === false ? `<span class="thumb-off">Oculto</span>` : ``}
+        </div>
+
+        <div class="fields">
+            <div class="f-row">
+                <label>Imagen</label>
+                <div class="file-row">
+                    <input type="text" data-field="img" value="${esc(slide.img)}" placeholder="https://... o sube un archivo">
+                    <button type="button" class="btn tiny" data-act="pick">
+                        <i class="fas fa-upload"></i> Subir
+                    </button>
+                </div>
+            </div>
+            <div class="f-grid">
+                <div class="f-row">
+                    <label>Etiqueta</label>
+                    <input type="text" data-field="tag" value="${esc(slide.tag)}" placeholder="Ej: Oferta del día">
+                </div>
+                <div class="f-row">
+                    <label>Título</label>
+                    <input type="text" data-field="title" value="${esc(slide.title)}" placeholder="Ej: Frutas y verduras frescas">
+                </div>
+            </div>
+            <div class="f-row">
+                <label>Descripción</label>
+                <textarea data-field="desc" rows="2" placeholder="Texto corto que verá el cliente">${esc(slide.desc)}</textarea>
+            </div>
+        </div>
+
+        <div class="card-actions">
+            <button type="button" class="icon-btn" data-act="up"   title="Subir"><i class="fas fa-arrow-up"></i></button>
+            <button type="button" class="icon-btn" data-act="down" title="Bajar"><i class="fas fa-arrow-down"></i></button>
+            <button type="button" class="icon-btn ${slide.active !== false ? 'on' : ''}" data-act="toggle"
+                title="${slide.active !== false ? 'Ocultar' : 'Mostrar'}">
+                <i class="fas ${slide.active !== false ? 'fa-eye' : 'fa-eye-slash'}"></i>
+            </button>
+            <button type="button" class="icon-btn danger" data-act="del" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </div>
+    `;
+
+    /* --- listeners de campos de texto --- */
+    el.querySelectorAll('input[data-field], textarea[data-field]').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const field = inp.dataset.field;
+            state.slides[index][field] = inp.value;
+
+            if (field === 'img') {
+                const thumb = el.querySelector('.thumb');
+                if (inp.value) {
+                    thumb.innerHTML = `<img src="${esc(inp.value)}" alt="">
+                        <span class="thumb-pos">#${index + 1}</span>
+                        ${state.slides[index].active === false ? `<span class="thumb-off">Oculto</span>` : ``}`;
+                } else {
+                    thumb.innerHTML = `<div class="thumb-empty"><i class="fas fa-image"></i><span>Sin imagen</span></div>
+                        <span class="thumb-pos">#${index + 1}</span>`;
+                }
+            }
+
+            marcarCambio();
+            if (index === 0 || state.slides[index].active !== false) renderPreview();
+        });
+    });
+
+    /* --- listeners de botones --- */
+    el.querySelectorAll('[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => accionTarjeta(btn.dataset.act, index, el));
+    });
+
+    return el;
+}
+
+/* ============================================================
+   ACCIONES
+   ============================================================ */
+function accionTarjeta(act, index, el) {
+    const s = state.slides[index];
+    if (!s) return;
+
+    if (act === 'up' && index > 0) {
+        [state.slides[index - 1], state.slides[index]] = [state.slides[index], state.slides[index - 1]];
+        marcarCambio();
+        renderLista();
+        renderPreview();
+        return;
+    }
+    if (act === 'down' && index < state.slides.length - 1) {
+        [state.slides[index + 1], state.slides[index]] = [state.slides[index], state.slides[index + 1]];
+        marcarCambio();
+        renderLista();
+        renderPreview();
+        return;
+    }
+    if (act === 'toggle') {
+        s.active = s.active === false ? true : false;
+        marcarCambio();
+        renderLista();
+        renderPreview();
+        return;
+    }
+    if (act === 'del') {
+        if (!confirm('¿Eliminar este banner?')) return;
+        if (s.img && s.img.includes('firebasestorage')) {
+            deleteObject(sRef(storage, s.img)).catch(() => {});
+        }
+        state.slides.splice(index, 1);
+        marcarCambio();
+        renderLista();
+        renderPreview();
+        return;
+    }
+    if (act === 'pick') {
+        fileImage.dataset.index = index;
+        fileImage.click();
+    }
+}
+
+/* ============================================================
+   SUBIR IMAGEN A FIREBASE STORAGE
+   ============================================================ */
+fileImage.addEventListener('change', async () => {
+    const file = fileImage.files && fileImage.files[0];
+    fileImage.value = '';
+    if (!file) return;
+
+    const index = Number(fileImage.dataset.index);
+    const slide = state.slides[index];
+    if (!slide) return;
+
+    if (!file.type.startsWith('image/')) {
+        toast('Selecciona un archivo de imagen', 'warn');
+        return;
+    }
+
+    loadingEl.classList.add('on');
+    setStatus('Subiendo imagen…', 'warn');
+
+    try {
+        const { blob, dataUrl } = await comprimirImagen(file);
+
+        // 1) Preview inmediato
+        slide.img = dataUrl;
+        renderLista();
+        renderPreview();
+
+        // 2) Subir a Storage
+        const path = `publicidad/${slide.id || uid()}_${Date.now()}.jpg`;
+        const ref  = sRef(storage, path);
+        await uploadBytes(ref, blob, { contentType: 'image/jpeg' });
+        const url  = await getDownloadURL(ref);
+
+        // 3) Reemplazar dataURL por URL pública
+        slide.img = url;
+
+        renderLista();
+        marcarCambio();
+        toast('Imagen subida correctamente', 'ok');
+    } catch (err) {
+        console.error(err);
+        toast('Error al subir la imagen. Revisa las reglas de Storage.', 'err');
+        setStatus('Error al subir', 'err');
+    } finally {
+        loadingEl.classList.remove('on');
+    }
+});
+
+/* ============================================================
+   VISTA PREVIA (sidebar)
+   ============================================================ */
+let pvIndex = 0;
+
+function renderPreview() {
+    const activos = state.slides.filter(s => s.active !== false && s.img);
+    if (!activos.length) {
+        pvSlide.style.backgroundImage = 'none';
+        pvTag.textContent = '';
+        pvTitle.textContent = 'Sin banners activos';
+        pvDesc.textContent = '';
+        pvDots.innerHTML = '';
+        pvIndex = 0;
+        return;
+    }
+    if (pvIndex >= activos.length) pvIndex = 0;
+
+    const s = activos[pvIndex];
+    pvSlide.style.backgroundImage = `url("${s.img}")`;
+    pvTag.textContent = s.tag || '';
+    pvTitle.textContent = s.title || 'Sin título';
+    pvDesc.textContent = s.desc || '';
+
+    pvDots.innerHTML = activos
+        .map((_, i) => `<span class="${i === pvIndex ? 'on' : ''}"></span>`)
+        .join('');
+}
+
+setInterval(() => {
+    const activos = state.slides.filter(s => s.active !== false && s.img);
+    if (activos.length > 1) {
+        pvIndex = (pvIndex + 1) % activos.length;
+        renderPreview();
+    }
+}, 3500);
+
+/* ============================================================
+   ACCIONES DE LA BARRA SUPERIOR
+   ============================================================ */
+document.getElementById('btnAdd').addEventListener('click', () => {
+    state.slides.push({
+        id: uid(),
+        img: '',
+        tag: '',
+        title: '',
+        desc: '',
+        active: true
+    });
+    marcarCambio();
+    renderLista();
+    renderPreview();
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+});
+
+document.getElementById('btnSave').addEventListener('click', () => publicar(true));
+
+document.getElementById('btnReload').addEventListener('click', async () => {
+    if (dirty && !confirm('Hay cambios sin publicar. ¿Recargar de todas formas?')) return;
+    await cargarDesdeFirebase();
+});
+
+document.getElementById('btnPreview').addEventListener('click', () => {
+    window.open('cliente.html', '_blank');
+});
+
+rotRange.addEventListener('input', () => {
+    const ms = Number(rotRange.value);
+    state.rotationMs = ms;
+    rotLabel.textContent = (ms / 1000).toFixed(1) + ' s';
+    marcarCambio();
+});
+
+/* ============================================================
+   INICIO
+   ============================================================ */
+cargarDesdeFirebase();
+
+/* Aviso al salir con cambios sin publicar */
+window.addEventListener('beforeunload', (e) => {
+    if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+
+</body>
+</html>
